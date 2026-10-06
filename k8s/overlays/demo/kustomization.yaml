@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: askit
+resources:
+  - ../../base
+configMapGenerator:
+  - name: askit-params
+    envs:
+      - params.env
+replacements:
+  - source:
+      kind: ConfigMap
+      name: askit-params
+      fieldPath: data.APP_HOST
+    targets:
+      - select: { kind: Ingress, name: askit }
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+# Image-Tags setzt die Pipeline: kustomize edit set image askit-backend=...:<sha>
+images:
+  - name: askit-backend
+    newName: registry.onstackit.cloud/askit/askit-backend
+    newTag: latest
+  - name: askit-frontend
+    newName: registry.onstackit.cloud/askit/askit-frontend
+    newTag: latest

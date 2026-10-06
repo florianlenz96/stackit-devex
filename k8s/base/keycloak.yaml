@@ -1,0 +1,71 @@
+# Keycloak selbst betrieben – der Teil, den es bei STACKIT (noch) nicht als Managed Service gibt.
+# Was hier bewusst vereinfacht ist, steht in docs/keycloak-betrieb.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels: { app.kubernetes.io/name: keycloak }
+spec:
+  replicas: 1   # HA: 2+ Replikas; Keycloak 26 clustert über die DB (jdbc-ping)
+  selector:
+    matchLabels: { app.kubernetes.io/name: keycloak }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: keycloak }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: keycloak
+          image: keycloak
+          args: ["start", "--import-realm"]
+          ports:
+            - { name: http, containerPort: 8080 }
+            - { name: management, containerPort: 9000 }
+          envFrom:
+            - secretRef: { name: keycloak }   # DB-Zugang, Admin- und Speaker-Passwort (ESO)
+          env:
+            - name: APP_HOST
+              valueFrom:
+                configMapKeyRef: { name: askit-params, key: APP_HOST }
+            - { name: APP_URL, value: "https://$(APP_HOST)" }   # Platzhalter im Realm-Import
+            - { name: KC_DB, value: postgres }
+            - { name: KC_HOSTNAME, value: "https://$(APP_HOST)/auth" }
+            - { name: KC_HTTP_RELATIVE_PATH, value: /auth }
+            - { name: KC_HTTP_MANAGEMENT_RELATIVE_PATH, value: / }
+            - { name: KC_HTTP_ENABLED, value: "true" }        # TLS endet am Ingress
+            - { name: KC_PROXY_HEADERS, value: xforwarded }
+            - { name: KC_HEALTH_ENABLED, value: "true" }
+            - { name: KC_METRICS_ENABLED, value: "true" }
+            - { name: JAVA_OPTS_KC_HEAP, value: "-XX:MaxRAMPercentage=70" }
+          volumeMounts:
+            - { name: realm, mountPath: /opt/keycloak/data/import, readOnly: true }
+          startupProbe:
+            httpGet: { path: /health/started, port: management }
+            periodSeconds: 5
+            failureThreshold: 60   # erster Start inkl. Build & DB-Migration dauert
+          readinessProbe:
+            httpGet: { path: /health/ready, port: management }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health/live, port: management }
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 250m, memory: 768Mi }
+            limits: { memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: realm
+          configMap: { name: keycloak-realm }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  selector: { app.kubernetes.io/name: keycloak }
+  ports:
+    - { name: http, port: 8080, targetPort: http }

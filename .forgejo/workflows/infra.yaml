@@ -1,0 +1,54 @@
+# Terraform aus der Pipeline: Plan bei jedem PR, Apply nur manuell.
+#
+# Secrets: STACKIT_SA_KEY    (JSON des Service Account Keys, Rolle: project.owner o. feiner)
+#          TF_STATE_BUCKET, TF_STATE_ACCESS_KEY, TF_STATE_SECRET_KEY
+#          TF_VARS_CLOUD     (Inhalt der terraform.tfvars für 10-cloud)
+#          TF_VARS_PLATFORM  (Inhalt der terraform.tfvars für 20-platform)
+# Hinweis: Die Runner-Egress-IP muss in admin_cidrs stehen (DB- und Secrets-Manager-ACLs).
+name: infra
+
+on:
+  pull_request:
+    paths: ["infra/**"]
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "terraform apply ausführen?"
+        type: boolean
+        default: false
+
+jobs:
+  terraform:
+    runs-on: stackit-docker
+    strategy:
+      max-parallel: 1
+      matrix:
+        stack: [10-cloud, 20-platform]
+    defaults:
+      run:
+        working-directory: infra/${{ matrix.stack }}
+    env:
+      STACKIT_SERVICE_ACCOUNT_KEY_PATH: /tmp/sa-key.json
+    steps:
+      - uses: https://github.com/actions/checkout@v4
+      - uses: https://github.com/hashicorp/setup-terraform@v3
+
+      - name: Zugangsdaten schreiben
+        run: |
+          echo '${{ secrets.STACKIT_SA_KEY }}' > /tmp/sa-key.json
+          cat > backend.hcl <<EOF
+          bucket     = "${{ secrets.TF_STATE_BUCKET }}"
+          access_key = "${{ secrets.TF_STATE_ACCESS_KEY }}"
+          secret_key = "${{ secrets.TF_STATE_SECRET_KEY }}"
+          EOF
+          if [ "${{ matrix.stack }}" = "10-cloud" ]; then
+            echo '${{ secrets.TF_VARS_CLOUD }}' > terraform.tfvars
+          else
+            echo '${{ secrets.TF_VARS_PLATFORM }}' > terraform.tfvars
+          fi
+
+      - run: terraform init -input=false -backend-config=backend.hcl
+      - run: terraform validate
+      - run: terraform plan -input=false -out=tfplan
+      - if: ${{ inputs.apply }}
+        run: terraform apply -input=false tfplan

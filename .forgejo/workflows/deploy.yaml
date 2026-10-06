@@ -1,0 +1,85 @@
+# Build -> Push in die STACKIT Container Registry -> Deploy nach SKE.
+#
+# Benötigte Einstellungen im Repository (Settings > Actions):
+#   Variablen: REGISTRY_PROJECT  (Projektname in der Container Registry, z. B. "askit")
+#   Secrets:   REGISTRY_USER     (Robot Account, z. B. robot$askit+forgejo)
+#              REGISTRY_PASSWORD (Token des Robot Accounts – wird nur einmal angezeigt!)
+#              KUBECONFIG_B64    (terraform -chdir=infra/20-platform output -raw ci_kubeconfig | base64 -w0)
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", "k8s/**", ".forgejo/workflows/deploy.yaml"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: registry.onstackit.cloud
+
+jobs:
+  build:
+    runs-on: stackit-docker
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - uses: https://github.com/actions/checkout@v4
+
+      - name: Image-Tag bestimmen
+        run: echo "TAG=$(echo ${{ github.sha }} | cut -c1-12)" >> "$GITHUB_ENV"
+
+      - name: Login Container Registry
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "$REGISTRY" -u '${{ secrets.REGISTRY_USER }}' --password-stdin
+
+      - name: Build & Push
+        run: |
+          IMAGE="$REGISTRY/${{ vars.REGISTRY_PROJECT }}/askit-${{ matrix.component }}"
+          docker build -t "$IMAGE:$TAG" app/${{ matrix.component }}
+          docker push "$IMAGE:$TAG"
+
+  deploy:
+    needs: build
+    runs-on: stackit-docker
+    steps:
+      - uses: https://github.com/actions/checkout@v4
+
+      - name: Werkzeuge installieren
+        run: |
+          curl -sSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x /usr/local/bin/kubectl
+          curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.7.1/kustomize_v5.7.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+
+      - name: Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Images setzen und anwenden
+        working-directory: k8s/overlays/demo
+        run: |
+          TAG=$(echo ${{ github.sha }} | cut -c1-12)
+          BASE="$REGISTRY/${{ vars.REGISTRY_PROJECT }}"
+          kustomize edit set image "askit-backend=$BASE/askit-backend:$TAG" "askit-frontend=$BASE/askit-frontend:$TAG"
+          kustomize build . | kubectl apply -f -
+
+      - name: Rollout abwarten
+        run: |
+          kubectl -n askit rollout status deployment/keycloak --timeout=6m
+          kubectl -n askit rollout status deployment/backend --timeout=3m
+          kubectl -n askit rollout status deployment/frontend --timeout=3m
+
+      - name: Smoke-Test
+        run: |
+          HOST=$(grep '^APP_HOST=' k8s/overlays/demo/params.env | cut -d= -f2)
+          for i in $(seq 1 30); do
+            curl -fsS "https://$HOST/api/config" && exit 0
+            echo "Noch nicht erreichbar (DNS/TLS?), neuer Versuch in 10 s"; sleep 10
+          done
+          exit 1
+
+      - name: Bei Fehlern Diagnose ausgeben
+        if: failure()
+        run: |
+          kubectl -n askit get pods,ingress,externalsecrets
+          kubectl -n askit get events --sort-by=.lastTimestamp | tail -30

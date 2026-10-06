@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>askit · Fragen an den Speaker</title>
+    <meta name="description" content="Stell deine Frage zum Vortrag und stimme für die Fragen der anderen ab." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap"
+    />
+    <!-- Wird im Container beim Start aus Umgebungsvariablen erzeugt (docker/40-runtime-config.sh) -->
+    <script src="/config.js"></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <p class="talk" id="talk-title">STACKIT im Praxistest</p>
+        <div class="session" id="session"></div>
+      </header>
+
+      <section class="ask" aria-labelledby="ask-heading">
+        <h1 id="ask-heading">Was möchtest du wissen?</h1>
+        <form id="ask-form" class="ask-form" hidden>
+          <label class="visually-hidden" for="question">Deine Frage</label>
+          <textarea id="question" name="question" rows="3" maxlength="500" required
+            placeholder="z. B. Wie lange hat das Terraform-Apply gedauert?"></textarea>
+          <div class="ask-row">
+            <label class="attach" id="attach-label" hidden>
+              <input type="file" id="attachment" accept="image/png,image/jpeg,image/webp" />
+              <span id="attach-text">Screenshot anhängen</span>
+            </label>
+            <span class="counter" id="counter" aria-live="polite">0 / 500</span>
+            <button type="submit" class="primary" id="submit">Frage senden</button>
+          </div>
+          <p class="form-error" id="form-error" role="alert"></p>
+        </form>
+        <div id="login-hint" class="login-hint" hidden>
+          <p>Zum Fragen und Abstimmen meldest du dich kurz an. Lesen geht auch ohne.</p>
+          <button type="button" class="primary" id="login-inline">Anmelden</button>
+        </div>
+      </section>
+
+      <section class="speaker" id="speaker-panel" hidden aria-labelledby="speaker-heading">
+        <h2 id="speaker-heading">Speaker-Werkzeuge</h2>
+        <button type="button" class="secondary" id="summarize">Offene Fragen zusammenfassen</button>
+        <div class="summary" id="summary" aria-live="polite"></div>
+      </section>
+
+      <section aria-labelledby="list-heading">
+        <div class="list-head">
+          <h2 id="list-heading">Fragen aus dem Publikum</h2>
+          <span class="list-count" id="list-count"></span>
+        </div>
+        <ol class="questions" id="questions"></ol>
+        <p class="empty" id="empty" hidden>Noch keine Fragen. Stell die erste.</p>
+      </section>
+
+      <footer class="footer">
+        <p>Läuft auf STACKIT: SKE, PostgreSQL Flex, Object Storage, Keycloak und AI Model Serving.</p>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

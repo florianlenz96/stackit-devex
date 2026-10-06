@@ -1,0 +1,29 @@
+# Lokale Entwicklung ohne Cloud: PostgreSQL + Keycloak.
+# Object Storage und KI sind lokal aus (Features blenden sich automatisch aus).
+#   docker compose up -d
+#   cd app/backend && cp .env.example .env && npm install && npm run dev
+#   cd app/frontend && npm install && npm run dev   -> http://localhost:5173
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: askit
+      POSTGRES_PASSWORD: askit
+      POSTGRES_DB: askit
+    ports: ["5432:5432"]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_RELATIVE_PATH: /auth
+      # Der Browser spricht Keycloak über den Vite-Proxy an (localhost:5173/auth)
+      KC_HOSTNAME: http://localhost:5173/auth
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      APP_URL: http://localhost:5173
+      SPEAKER_PASSWORD: speaker
+    volumes:
+      - ./k8s/base/keycloak-realm.json:/opt/keycloak/data/import/realm-askit.json:ro
+    ports: ["8081:8080"]

@@ -1,0 +1,50 @@
+{
+  "realm": "askit",
+  "displayName": "askit",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "bruteForceProtected": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["de", "en"],
+  "defaultLocale": "de",
+  "roles": {
+    "realm": [
+      { "name": "speaker", "description": "Darf Fragen als beantwortet markieren und die KI-Zusammenfassung nutzen" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "askit-frontend",
+      "name": "askit Web-App",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": ["${APP_URL}/*"],
+      "webOrigins": ["${APP_URL}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${APP_URL}/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "speaker",
+      "firstName": "Speaker",
+      "lastName": "Bühne",
+      "email": "speaker@askit.invalid",
+      "emailVerified": true,
+      "enabled": true,
+      "realmRoles": ["speaker"],
+      "credentials": [{ "type": "password", "value": "${SPEAKER_PASSWORD}", "temporary": false }]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+project_id        = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+dns_subdomain     = "askit-demo"            # -> askit-demo.runs.onstackit.cloud
+dns_contact_email = "du@example.com"
+admin_cidrs       = ["203.0.113.10/32"]     # deine IP bzw. die der CI-Runner

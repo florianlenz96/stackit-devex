@@ -1,0 +1,40 @@
+# STACKIT Git Pipelines (Forgejo Actions): Syntax sehr nah an GitHub Actions, aber nicht identisch.
+# Runner-Label prüfen: STACKIT Portal > Git > Instanz > Runners (bzw. eigener Runner).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: stackit-docker
+    container: node:22-alpine
+    defaults:
+      run:
+        working-directory: app/backend
+    steps:
+      - uses: https://github.com/actions/checkout@v4
+      - run: npm ci
+      - run: npm test
+
+  frontend:
+    runs-on: stackit-docker
+    container: node:22-alpine
+    defaults:
+      run:
+        working-directory: app/frontend
+    steps:
+      - uses: https://github.com/actions/checkout@v4
+      - run: npm ci
+      - run: npm run build
+
+  manifests:
+    runs-on: stackit-docker
+    steps:
+      - uses: https://github.com/actions/checkout@v4
+      - name: Kustomize rendern
+        run: |
+          curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.7.1/kustomize_v5.7.1_linux_amd64.tar.gz | tar xz
+          ./kustomize build k8s/overlays/demo > /dev/null

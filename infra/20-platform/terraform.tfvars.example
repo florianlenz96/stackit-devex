@@ -1,0 +1,8 @@
+state_bucket      = "askit-tfstate-xxxx"
+state_access_key  = "..."
+state_secret_key  = "..."
+letsencrypt_email = "du@example.com"
+registry_robot = {
+  username = "robot$askit+pull"
+  password = "..."
+}

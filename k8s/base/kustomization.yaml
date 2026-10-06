@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: askit
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: askit
+resources:
+  - externalsecrets.yaml
+  - backend.yaml
+  - frontend.yaml
+  - keycloak.yaml
+  - ingress.yaml
+configMapGenerator:
+  - name: keycloak-realm
+    files:
+      - realm-askit.json=keycloak-realm.json
+images:
+  - name: keycloak
+    newName: quay.io/keycloak/keycloak
+    newTag: "26.4"

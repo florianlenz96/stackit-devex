@@ -1,0 +1,4 @@
+# terraform init -backend-config=backend.hcl
+bucket     = "askit-tfstate-xxxx"
+access_key = "..."
+secret_key = "..."

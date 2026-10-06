@@ -1,0 +1,4 @@
+apiVersion: v2
+name: platform-config
+description: ClusterIssuer (Let's Encrypt) und ClusterSecretStore (STACKIT Secrets Manager)
+version: 0.1.0

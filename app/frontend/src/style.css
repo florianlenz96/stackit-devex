@@ -1,0 +1,175 @@
+:root {
+  --paper: #eceee8;
+  --surface: #f7f8f4;
+  --ink: #1b2421;
+  --muted: #56625d;
+  --rule: #cbd2c9;
+  --cobalt: #2445c4;
+  --cobalt-ink: #f4f6ff;
+  --danger: #a3261b;
+  --display: 'Bricolage Grotesque', 'Arial Narrow', sans-serif;
+  --text: 'Atkinson Hyperlegible', Verdana, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 1.0625rem/1.55 var(--text);
+}
+
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--ink);
+}
+.talk { margin: 0; font-weight: 700; }
+.session { display: flex; gap: 0.75rem; align-items: baseline; color: var(--muted); }
+
+h1, h2 { font-family: var(--display); line-height: 1.05; margin: 0; }
+h1 {
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 2rem 0 1rem;
+}
+h2 { font-size: 1.35rem; font-weight: 700; }
+
+.ask-form textarea {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+.ask-row { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap; }
+.counter { color: var(--muted); font-size: 0.9rem; margin-left: auto; font-variant-numeric: tabular-nums; }
+.form-error { color: var(--danger); min-height: 1.5em; margin: 0.5rem 0 0; }
+
+.attach { cursor: pointer; color: var(--cobalt); text-decoration: underline; text-underline-offset: 3px; }
+.attach input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.attach:focus-within { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+
+button { font: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+
+.primary {
+  border: 0;
+  border-radius: 4px;
+  padding: 0.7rem 1.3rem;
+  background: var(--cobalt);
+  color: var(--cobalt-ink);
+  font-weight: 700;
+}
+.primary:disabled { opacity: 0.6; }
+.secondary {
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  padding: 0.55rem 1rem;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 700;
+}
+.link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cobalt);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link.small { font-size: 0.9rem; margin-top: 0.5rem; }
+
+.login-hint { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.login-hint p { margin: 0; color: var(--muted); flex: 1 1 16rem; }
+
+.speaker {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 2px dashed var(--ink);
+  border-radius: 4px;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.summary { white-space: pre-wrap; }
+
+.list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.list-count { color: var(--muted); font-size: 0.9rem; }
+
+.questions { list-style: none; margin: 0; padding: 0; }
+.question {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.question.is-answered { color: var(--muted); }
+
+/* Die Stimmenzahl ist das prägende Element: eine Rangliste, die man von hinten im Saal lesen kann. */
+.vote {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.1rem;
+  padding: 0.35rem 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+}
+.vote:not(:disabled):hover { border-color: var(--rule); }
+.vote-count {
+  font-family: var(--display);
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.vote-label { font-size: 0.8rem; color: var(--muted); }
+.vote.is-voted { background: var(--cobalt); color: var(--cobalt-ink); }
+.vote.is-voted .vote-label { color: var(--cobalt-ink); }
+
+.question-text { margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
+.question.is-answered .question-text { text-decoration: line-through; text-decoration-thickness: 1px; }
+.question-meta { margin: 0.35rem 0 0; font-size: 0.875rem; color: var(--muted); }
+.question-body img { display: block; max-width: 100%; max-height: 16rem; margin-top: 0.6rem; border: 1px solid var(--rule); border-radius: 4px; }
+
+.empty { color: var(--muted); padding: 1.5rem 0; }
+.footer { margin-top: 3rem; color: var(--muted); font-size: 0.875rem; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .question { grid-template-columns: 3.5rem 1fr; gap: 0.75rem; }
+  .vote-count { font-size: 1.9rem; }
+}

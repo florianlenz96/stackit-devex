@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+**/.terraform/
+*.tfstate*
+tfplan
+backend.hcl
+terraform.tfvars
+sa-key-*.json
